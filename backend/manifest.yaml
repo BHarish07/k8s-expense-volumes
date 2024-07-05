@@ -1,16 +1,17 @@
-apiVersion: v1 
+apiVersion: v1
 kind: ConfigMap
 metadata:
   name: backend
   namespace: expense
 data:
-  DB_HOST: mysql  #mysql component service 
+  DB_HOST: mysql # mysql component service name
 ---
-apiVersion: apps/v1
 kind: Deployment
+apiVersion: apps/v1
 metadata:
   name: backend
   namespace: expense
+  # these labels are deployment related labels
   labels:
     component: backend
     project: expense
@@ -22,6 +23,7 @@ spec:
       component: backend
       project: expense
       tier: app
+  # pod definition
   template:
     metadata:
       labels:
@@ -32,21 +34,20 @@ spec:
       containers:
       - name: backend
         image: joindevops/backend:v1.0
-        volumeMounts:
-        - name: nginx.conf
-          mountPath: /etc/nginx/nginx.conf
-          subPath: nginx.conf
-          readOnly: true
-      volumes:
-      - name: nginx.conf
-        configMap:
-          name: frontend
-          items:
-            - key: nginx.conf
-              path: nginx.conf
----
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+          limits:
+            cpu: "150m"
+            memory: "256Mi"
+        envFrom:
+        - configMapRef:
+            name: backend
 
-apiVersion: v1 
+
+---
+apiVersion: v1
 kind: Service
 metadata:
   name: backend
@@ -58,9 +59,5 @@ spec:
     tier: app
   ports:
   - protocol: TCP
-    port: 80
-    targetPort: 8080
-    
-
-        
-    
+    port: 8080 #service-port
+    targetPort: 8080 #target-port
